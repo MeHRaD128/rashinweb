@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:rashinweb/features/auth/presentation/login_screen.dart';
+import 'package:rashinweb/test/login_screen_test.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -34,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     Navigator.of(
       context,
-    ).pushReplacement(CupertinoPageRoute(builder: (_) => const LoginScreen()));
+    ).pushReplacement(CupertinoPageRoute(builder: (_) => const AuthXApp()));
   }
 
   @override
