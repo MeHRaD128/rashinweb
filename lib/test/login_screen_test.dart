@@ -1,52 +1,22 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:rashinweb/test/login_screen_test_two.dart';
 
-// void main() => runApp(const AuthXApp());
-
-// نگهدارنده وضعیت تم به صورت گلوبال
-final ValueNotifier<ThemeMode> themeNotifier =
-    ValueNotifier(ThemeMode.dark);
+void main() => runApp(const AuthXApp());
 
 class AuthXApp extends StatelessWidget {
   const AuthXApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: themeNotifier,
-      builder: (context, mode, _) {
-        return MaterialApp(
-          title: 'Flutter AuthX',
-          debugShowCheckedModeBanner: false,
-          themeMode: mode,
-          theme: _buildLightTheme(),
-          darkTheme: _buildDarkTheme(),
-          home: const AuthXScreen(),
-        );
-      },
-    );
-  }
-
-  ThemeData _buildDarkTheme() {
-    return ThemeData(
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF0A0A0A),
-      fontFamily: 'Roboto',
-      colorScheme: const ColorScheme.dark(
-        primary: Color(0xFFFF2D87),
-        surface: Color(0xFF1A1A1A),
+    return MaterialApp(
+      title: 'Flutter AuthX',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-    );
-  }
-
-  ThemeData _buildLightTheme() {
-    return ThemeData(
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFF5F5F7),
-      fontFamily: 'Roboto',
-      colorScheme: const ColorScheme.light(
-        primary: Color(0xFFFF2D87),
-        surface: Colors.white,
-      ),
+      home: const AuthXScreen(),
     );
   }
 }
@@ -60,50 +30,22 @@ class AuthXScreen extends StatefulWidget {
 
 class _AuthXScreenState extends State<AuthXScreen>
     with SingleTickerProviderStateMixin {
+  // کنترل‌کننده‌ی انیمیشن برای جابه‌جایی صفحه
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+  // وضعیت لاگین/ثبت‌نام (true = login, false = register)
   bool _isLogin = true;
-  bool _obscurePassword = true;
-  bool _showError = false;
 
-  final TextEditingController _nameController = TextEditingController();
+  // کنترل‌کننده‌های فیلدها
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
+  // کلیدهای فرم
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  // رنگ‌های اصلی برند (ثابت در هر دو تم)
-  static const Color _pinkAccent = Color(0xFFFF2D87);
-  static const Color _orangeAccent = Color(0xFFFFA84B);
-
-  static const LinearGradient _buttonGradient = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: [_pinkAccent, _orangeAccent],
-  );
-
-  // بررسی اینکه آیا در حالت تیره هستیم یا نه
-  bool _isDarkMode(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark;
-  }
-
-  // رنگ‌های داینامیک بر اساس تم
-  Color _bgColor(BuildContext c) =>
-      _isDarkMode(c) ? const Color(0xFF0A0A0A) : const Color(0xFFF5F5F7);
-  Color _cardColor(BuildContext c) =>
-      _isDarkMode(c) ? const Color(0xFF1A1A1A) : Colors.white;
-  Color _fieldColor(BuildContext c) =>
-      _isDarkMode(c) ? const Color(0xFF141414) : const Color(0xFFF0F0F3);
-  Color _borderColor(BuildContext c) =>
-      _isDarkMode(c) ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0);
-  Color _textColor(BuildContext c) =>
-      _isDarkMode(c) ? Colors.white : const Color(0xFF1A1A1A);
-  Color _subTextColor(BuildContext c) =>
-      _isDarkMode(c) ? Colors.grey[500]! : Colors.grey[600]!;
-  Color _hintColor(BuildContext c) =>
-      _isDarkMode(c) ? Colors.grey[600]! : Colors.grey[500]!;
 
   @override
   void initState() {
@@ -116,466 +58,383 @@ class _AuthXScreenState extends State<AuthXScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
     _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+        Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
     _animationController.forward();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
+  // تغییر حالت با انیمیشن
   void _toggleMode() {
     setState(() {
       _isLogin = !_isLogin;
-      _showError = false;
     });
+    // ریست انیمیشن برای نمایش دوباره
     _animationController.reset();
     _animationController.forward();
   }
 
+  // ارسال فرم
   void _submit() {
-    setState(() => _showError = false);
     if (_formKey.currentState!.validate()) {
+      // در اینجا می‌توانید لاگین یا ثبت‌نام را هندل کنید
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isLogin ? 'Login Successful ✅' : 'Account Created ✅'),
+          content: Text(
+            _isLogin ? 'ورود موفق ✅' : 'ثبت‌نام موفق ✅',
+            style: TextStyle(fontFamily: "On"),
+          ),
           backgroundColor: Colors.green,
         ),
       );
-    } else {
-      if (_isLogin) setState(() => _showError = true);
     }
-  }
-
-  // چرخش بین سه حالت تم
-  void _cycleTheme() {
-    final current = themeNotifier.value;
-    ThemeMode next;
-    String label;
-    if (current == ThemeMode.dark) {
-      next = ThemeMode.light;
-      label = 'Light Mode ☀️';
-    } else if (current == ThemeMode.light) {
-      next = ThemeMode.system;
-      label = 'System Mode ⚙️';
-    } else {
-      next = ThemeMode.dark;
-      label = 'Dark Mode 🌙';
-    }
-    themeNotifier.value = next;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(label),
-        duration: const Duration(seconds: 1),
-        backgroundColor: _pinkAccent,
-      ),
+    Navigator.push(
+      context,
+      CupertinoPageRoute(builder: (context) => const AuthXAppTwo()),
     );
-  }
-
-  // آیکون بر اساس تم فعلی
-  IconData _themeIcon(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.dark:
-        return Icons.dark_mode_rounded;
-      case ThemeMode.light:
-        return Icons.light_mode_rounded;
-      case ThemeMode.system:
-        return Icons.settings_suggest_rounded;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgColor(context),
-      body: Stack(
-        children: [
-          // خط گرادیانت تزئینی
-          Positioned(
-            top: 100,
-            right: -50,
-            child: Container(
-              width: 300,
-              height: 2,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.transparent, _pinkAccent, Colors.transparent],
-                ),
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0F0C29), Color(0xFF302B63), Color(0xFF24243E)],
           ),
-          SafeArea(
+        ),
+        child: SafeArea(
+          child: Center(
             child: SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: SlideTransition(
                   position: _slideAnimation,
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 30),
-                        _buildSubtitle(),
-                        const SizedBox(height: 20),
-                        _buildSocialButtons(),
-                        const SizedBox(height: 25),
-                        if (!_isLogin) ...[
-                          _buildLabel('Name'),
-                          const SizedBox(height: 8),
-                          _buildTextField(
-                            controller: _nameController,
-                            hint: 'Hammad Anwar',
-                            validator: (v) => v == null || v.isEmpty
-                                ? 'Enter your name'
-                                : null,
-                          ),
-                          const SizedBox(height: 18),
-                        ],
-                        _buildLabel('Email'),
-                        const SizedBox(height: 8),
-                        _buildTextField(
-                          controller: _emailController,
-                          hint: 'rh676838@gmail.com',
-                          keyboardType: TextInputType.emailAddress,
-                          suffixIcon: _emailController.text.isNotEmpty &&
-                                  RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                                      .hasMatch(_emailController.text)
-                              ? const Icon(Icons.check,
-                                  color: _pinkAccent, size: 20)
-                              : null,
-                          onChanged: (_) => setState(() {}),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                                .hasMatch(value)) {
-                              return 'Invalid email';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 18),
-                        _buildLabel('Password'),
-                        const SizedBox(height: 8),
-                        _buildTextField(
-                          controller: _passwordController,
-                          hint: _isLogin ? '••••••••' : 'Pick a strong password',
-                          obscureText: _obscurePassword,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: _subTextColor(context),
-                              size: 20,
+                  child: Card(
+                    elevation: 20,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    color: Colors.white.withOpacity(0.95),
+                    child: Padding(
+                      padding: const EdgeInsets.all(28.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // هدر
+                            // const Text(
+                            //   'FLUTTER AUTHX',
+                            //   style: TextStyle(
+                            //     fontSize: 28,
+                            //     fontWeight: FontWeight.bold,
+                            //     letterSpacing: 1.2,
+                            //     color: Color(0xFF0F0C29),
+                            //   ),
+                            // ),
+                            Image.asset("assets/images/logo-s.png", width: 150),
+                            Image.asset("assets/images/rashinweb-text.png"),
+                            // ==================================================
+                            // Description
+                            // ==================================================
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  "رشد کسب و کار",
+                                  style: TextStyle(
+                                    fontFamily: "On",
+                                    color: CupertinoColors.inactiveGray,
+                                    fontSize: 20,
+                                  ),
+                                ),
+
+                                _divider(),
+
+                                const Text(
+                                  "سئو",
+                                  style: TextStyle(
+                                    fontFamily: "On",
+                                    color: CupertinoColors.inactiveGray,
+                                    fontSize: 20,
+                                  ),
+                                ),
+
+                                _divider(),
+
+                                const Text(
+                                  "طراحی سایت",
+                                  style: TextStyle(
+                                    fontFamily: "On",
+                                    color: CupertinoColors.inactiveGray,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ],
                             ),
-                            onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
+                            const SizedBox(height: 8),
+                            Text(
+                              _isLogin
+                                  ? 'به حساب خود وارد شوید'
+                                  : 'حساب جدید بسازید',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontFamily: "On",
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+
+                            // فیلد ایمیل
+                            TextFormField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              style: TextStyle(fontFamily: "On"),
+                              decoration: InputDecoration(
+                                labelText: 'ایمیل',
+                                labelStyle: TextStyle(
+                                  fontFamily: "On",
+                                  fontSize: 20,
+                                ),
+                                prefixIcon: const Icon(Icons.email_outlined),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                errorStyle: TextStyle(
+                                  fontFamily: "On",
+                                  fontSize: 15,
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'لطفاً ایمیل را وارد کنید';
+                                }
+                                if (!RegExp(
+                                  r'^[^@]+@[^@]+\.[^@]+',
+                                ).hasMatch(value)) {
+                                  return 'ایمیل معتبر نیست';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 18),
+
+                            // فیلد رمز عبور
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: true,
+                              style: TextStyle(fontFamily: "On"),
+                              decoration: InputDecoration(
+                                labelText: 'رمز عبور',
+                                labelStyle: TextStyle(
+                                  fontFamily: "On",
+                                  fontSize: 20,
+                                ),
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                errorStyle: TextStyle(
+                                  fontFamily: "On",
+                                  fontSize: 15,
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.length < 6) {
+                                  return 'رمز عبور حداقل ۶ کاراکتر';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 18),
+
+                            // فیلد تکرار رمز (فقط در حالت ثبت‌نام)
+                            if (!_isLogin)
+                              Column(
+                                children: [
+                                  TextFormField(
+                                    controller: _confirmPasswordController,
+                                    obscureText: true,
+                                    style: TextStyle(
+                                      fontFamily: "On",
+                                      fontSize: 20,
+                                    ),
+                                    decoration: InputDecoration(
+                                      labelText: 'تکرار رمز عبور',
+                                      labelStyle: TextStyle(
+                                        fontFamily: "On",
+                                        fontSize: 20,
+                                      ),
+                                      prefixIcon: const Icon(
+                                        Icons.lock_outline,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      errorStyle: TextStyle(
+                                        fontFamily: "On",
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    validator: (value) {
+                                      if (value != _passwordController.text) {
+                                        return 'رمزها مطابقت ندارند';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
+                              ),
+
+                            // دکمه فراموشی رمز (فقط لاگین)
+                            if (_isLogin)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'لینک بازیابی ارسال شد',
+                                          style: TextStyle(fontFamily: "On"),
+                                        ),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    'فراموشی رمز؟',
+                                    style: TextStyle(
+                                      fontFamily: "On",
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            const SizedBox(height: 12),
+
+                            // دکمه اصلی (ورود / ثبت‌نام)
+                            SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: ElevatedButton(
+                                onPressed: _submit,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF302B63),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  elevation: 8,
+                                ),
+                                child: Text(
+                                  _isLogin ? 'ورود' : 'ثبت‌نام',
+                                  style: const TextStyle(
+                                    fontSize: 25,
+                                    fontFamily: "On",
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // دکمه تغییر حالت
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                TextButton(
+                                  onPressed: _toggleMode,
+                                  child: Text(
+                                    _isLogin ? 'ثبت‌نام' : 'ورود',
+                                    style: const TextStyle(
+                                      fontFamily: "On",
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF302B63),
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  _isLogin
+                                      ? 'حساب ندارید؟'
+                                      : 'قبلاً ثبت‌نام کرده‌اید؟',
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontFamily: "On",
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const Divider(height: 30, thickness: 1),
+
+                            // لینک لینکدین (مطابق عکس)
+                            InkWell(
+                              onTap: () {
+                                // باز کردن لینک در مرورگر
+                                // می‌توانید از url_launcher استفاده کنید
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'باز کردن لینکدین (لینک نمونه)',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                '© 2026 Rashin Web. All rights reserved.',
+                                style: TextStyle(
+                                  color: Colors.indigoAccent,
+                                  // decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                         ),
-                        const SizedBox(height: 30),
-                        _buildMainButton(),
-                        const SizedBox(height: 20),
-                        if (_showError && _isLogin) _buildErrorBox(),
-                        if (_showError && _isLogin) const SizedBox(height: 20),
-                        _buildToggleText(),
-                        const SizedBox(height: 30),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
+}
 
-  // هدر شامل دکمه بازگشت + عنوان + دکمه تغییر تم
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: _cardColor(context),
-            shape: BoxShape.circle,
-            border: Border.all(color: _borderColor(context)),
-          ),
-          child: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new,
-                color: _textColor(context), size: 18),
-            onPressed: () {},
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          _isLogin ? 'Sign in' : 'Sign up',
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w600,
-            color: _textColor(context),
-          ),
-        ),
-        const Spacer(),
-        // دکمه تغییر تم
-        _buildThemeToggleButton(),
-      ],
-    );
-  }
+Widget _divider() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 10),
 
-  Widget _buildThemeToggleButton() {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: themeNotifier,
-      builder: (context, mode, _) {
-        return GestureDetector(
-          onTap: _cycleTheme,
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: _buttonGradient,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: _pinkAccent.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 350),
-              transitionBuilder: (child, animation) {
-                return RotationTransition(
-                  turns: Tween<double>(begin: 0.75, end: 1.0).animate(animation),
-                  child: ScaleTransition(scale: animation, child: child),
-                );
-              },
-              child: Icon(
-                _themeIcon(mode),
-                key: ValueKey(mode),
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+    child: Container(
+      width: 1,
+      height: 16,
 
-  Widget _buildSubtitle() {
-    return Text(
-      _isLogin
-          ? 'Sign in with one of the following options'
-          : 'Sign up with one of the following options',
-      style: TextStyle(fontSize: 13, color: _subTextColor(context)),
-    );
-  }
-
-  Widget _buildSocialButtons() {
-    return Row(
-      children: [
-        Expanded(child: _socialButton(child: _googleIcon())),
-        const SizedBox(width: 15),
-        Expanded(
-          child: _socialButton(
-            child: Icon(Icons.apple, color: _textColor(context), size: 28),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _socialButton({required Widget child}) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () {},
-      child: Container(
-        height: 55,
-        decoration: BoxDecoration(
-          color: _cardColor(context),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _borderColor(context)),
-        ),
-        child: Center(child: child),
-      ),
-    );
-  }
-
-  Widget _googleIcon() {
-    return Text(
-      'G',
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: _textColor(context),
-      ),
-    );
-  }
-
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(fontSize: 13, color: _subTextColor(context)),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    bool obscureText = false,
-    TextInputType? keyboardType,
-    Widget? suffixIcon,
-    String? Function(String?)? validator,
-    void Function(String)? onChanged,
-  }) {
-    return Container(
       decoration: BoxDecoration(
-        color: _fieldColor(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _borderColor(context)),
-      ),
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscureText,
-        keyboardType: keyboardType,
-        onChanged: onChanged,
-        validator: validator,
-        style: TextStyle(color: _textColor(context), fontSize: 14),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: _hintColor(context), fontSize: 14),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          border: InputBorder.none,
-          suffixIcon: suffixIcon,
-          errorStyle: const TextStyle(color: _pinkAccent, fontSize: 11),
-        ),
-      ),
-    );
-  }
+        color: const Color(0xFFF59E0B),
 
-  Widget _buildMainButton() {
-    return GestureDetector(
-      onTap: _submit,
-      child: Container(
-        width: double.infinity,
-        height: 55,
-        decoration: BoxDecoration(
-          gradient: _buttonGradient,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: _pinkAccent.withOpacity(0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            _isLogin ? 'Login Account' : 'Create Account',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ),
+        borderRadius: BorderRadius.circular(10),
       ),
-    );
-  }
-
-  Widget _buildErrorBox() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _cardColor(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _borderColor(context)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.warning_amber_rounded,
-              color: Colors.redAccent, size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Error',
-                  style: TextStyle(
-                    color: _textColor(context),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'A network error (such as timeout, interrupted connection or unreachable host) has occurred.',
-                  style: TextStyle(
-                    color: _subTextColor(context),
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToggleText() {
-    return Center(
-      child: GestureDetector(
-        onTap: _toggleMode,
-        child: RichText(
-          text: TextSpan(
-            style: TextStyle(fontSize: 13, color: _subTextColor(context)),
-            children: [
-              TextSpan(
-                text: _isLogin
-                    ? "Don't have an account? "
-                    : 'Already have an account? ',
-              ),
-              const TextSpan(
-                text: '',
-              ),
-              TextSpan(
-                text: _isLogin ? 'Sign up' : 'Login',
-                style: const TextStyle(
-                  color: _pinkAccent,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }

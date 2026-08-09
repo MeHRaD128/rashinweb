@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:rashinweb/test/login_screen_test.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -585,7 +586,10 @@ class _LoginScreenState extends State<LoginScreen> {
         padding: const EdgeInsets.symmetric(vertical: 15),
 
         onPressed: () {
-          // منطق ورود
+          Navigator.push(
+            context,
+            CupertinoPageRoute(builder: (context) => const AuthXApp()),
+          );
         },
 
         child: const Text(
